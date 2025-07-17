@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP app to Azure Web App - demosistemas
+name: Deploy static HTML to Azure Web App - demosistemas
 
 on:
   push:
@@ -10,37 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: windows-latest
+  deploy:
+    runs-on: ubuntu-latest
+
     permissions:
-      contents: read #This is required for actions/checkout
+      id-token: write # For Azure login
+      contents: read  # For checkout
 
     steps:
+      # 1️⃣ Checkout the repo
       - uses: actions/checkout@v4
 
-      - name: Publish to folder
-        run: msbuild /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir="\published\"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: ASP-app
-          path: '/published/**'
-
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: ASP-app
-      
+      # 2️⃣ Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -48,11 +26,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7B6872FFFF8846AF88EDA43010D78537 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A3DDEA8AA92948DAAA3738342EA30A72 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      # 3️⃣ Deploy to Azure Web App
+      - name: Deploy static site to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'demosistemas'
           slot-name: 'Production'
           package: .
-          
